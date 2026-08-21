@@ -87,9 +87,9 @@ export const BoilerplatesView: React.FC = () => {
                   <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
                     {b.name}
                     {b.visibility === 'public' ? (
-                      <Globe className="w-3.5 h-3.5 text-emerald-400" title="Público" />
+                      <span title="Público"><Globe className="w-3.5 h-3.5 text-emerald-400" /></span>
                     ) : (
-                      <Lock className="w-3.5 h-3.5 text-[var(--text-muted)]" title="Privado" />
+                      <span title="Privado"><Lock className="w-3.5 h-3.5 text-[var(--text-muted)]" /></span>
                     )}
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
@@ -135,7 +135,7 @@ export const BoilerplatesView: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] font-mono">
-                <span>Último uso: {b.lastUsedInProject || 'Recentemente'}</span>
+                <span>Último uso: {b.lastUsedProjectId || 'Recentemente'}</span>
                 <button
                   onClick={() => {
                     if (confirm('Deseja remover este boilerplate?')) {

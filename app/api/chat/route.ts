@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateAiCompletion, AiProvider } from "../../../../src/lib/ai";
-import { getSession } from "../../../../src/lib/auth";
+import { generateAiCompletion, AiProvider } from "@/src/lib/ai";
+import { getSession } from "@/src/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {

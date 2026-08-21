@@ -69,7 +69,7 @@ export const MyPurchasesView: React.FC = () => {
                 <div>
                   <h3 className="text-sm font-bold text-[var(--text-primary)]">{order.listingTitle}</h3>
                   <div className="text-[11px] text-[var(--text-muted)] font-mono">
-                    Pedido: {order.id} • Pago via Stripe Connect ({order.paymentMethod.toUpperCase()})
+                    Pedido: {order.id} • Pago via Stripe Connect ({(order.paymentMethod ?? 'cartão').toUpperCase()})
                   </div>
                 </div>
               </div>

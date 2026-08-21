@@ -12,10 +12,8 @@ import {
   Send,
   User,
 } from 'lucide-react';
-import { CommunityPost } from '../../types';
-
 export const CommunityView: React.FC = () => {
-  const { communityPosts, addCommunityPost, upvotePost, addPostReply, showToast } = useApp();
+  const { communityTopics, createCommunityTopic, upvoteTopic, addTopicReply, showToast } = useApp();
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -25,7 +23,7 @@ export const CommunityView: React.FC = () => {
   const [isPosting, setIsPosting] = useState(false);
   const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
 
-  const filtered = communityPosts.filter((p) => {
+  const filtered = communityTopics.filter((p) => {
     const matchesCat = selectedCategory === 'all' || p.category === selectedCategory;
     const matchesSearch =
       p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -34,14 +32,14 @@ export const CommunityView: React.FC = () => {
     return matchesCat && matchesSearch;
   });
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostTitle.trim() || !newPostContent.trim()) return;
 
-    addCommunityPost({
+    await createCommunityTopic({
       title: newPostTitle.trim(),
       content: newPostContent.trim(),
-      category: 'arquitetura',
+      category: 'dev',
       tags: newPostTags.split(',').map((t) => t.trim()).filter(Boolean),
     });
 
@@ -55,7 +53,7 @@ export const CommunityView: React.FC = () => {
     const text = replyTextMap[postId];
     if (!text || !text.trim()) return;
 
-    addPostReply(postId, text.trim());
+    addTopicReply(postId, text.trim());
     setReplyTextMap({ ...replyTextMap, [postId]: '' });
   };
 
@@ -164,7 +162,7 @@ export const CommunityView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
-          {['all', 'arquitetura', 'prompts', 'precificacao', 'cases'].map((cat) => (
+          {['all', 'dev', 'marketing', 'design', 'business', 'ai', 'automation'].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -209,14 +207,14 @@ export const CommunityView: React.FC = () => {
             </p>
 
             {/* AI Auto-Match Recommendation Card */}
-            {post.aiSuggestedAnswer && (
+            {post.aiAnalysis?.summaryAnswer && (
               <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-950/30 to-[#121014] border border-[#6B21A8]/40 space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-[var(--accent-bright)]">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Auto-Match IA (Sugestão com base em Ativos do Ecossistema):</span>
                 </div>
                 <p className="text-xs text-[var(--text-primary)] leading-relaxed">
-                  {post.aiSuggestedAnswer}
+                  {post.aiAnalysis.summaryAnswer}
                 </p>
               </div>
             )}
@@ -233,11 +231,11 @@ export const CommunityView: React.FC = () => {
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => upvotePost(post.id)}
+                  onClick={() => upvoteTopic(post.id)}
                   className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#121014] hover:bg-[#1A1620] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--accent-bright)] cursor-pointer transition-all"
                 >
                   <ThumbsUp className="w-3.5 h-3.5" />
-                  <span className="font-mono">{post.upvotes}</span>
+                  <span className="font-mono">{post.likesCount}</span>
                 </button>
 
                 <div className="flex items-center gap-1.5 text-[var(--text-muted)] font-mono">

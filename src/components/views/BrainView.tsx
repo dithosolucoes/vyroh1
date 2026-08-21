@@ -15,7 +15,7 @@ import {
   FolderKanban,
   FileCode,
 } from 'lucide-react';
-import { AIRoadmapResult } from '../../types';
+import { RoadmapRun } from '../../types';
 
 export const BrainView: React.FC = () => {
   const {
@@ -36,36 +36,35 @@ export const BrainView: React.FC = () => {
   const [estimatedHours, setEstimatedHours] = useState('40');
   const [budgetGoal, setBudgetGoal] = useState('25000');
   const [isLoading, setIsLoading] = useState(false);
-  const [roadmapResult, setRoadmapResult] = useState<AIRoadmapResult | null>(null);
+  const [roadmapResult, setRoadmapResult] = useState<RoadmapRun | null>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ideaText.trim()) return;
 
     setIsLoading(true);
-    const result = await generateRoadmap(ideaText, {
-      stack: targetStack,
-      budget: Number(budgetGoal),
-      hours: Number(estimatedHours),
-    });
+    const result = await generateRoadmap(
+      `${ideaText}\n\nStack alvo: ${targetStack}. Orçamento: R$ ${budgetGoal}. Disponibilidade: ${estimatedHours}h.`,
+      '4 semanas'
+    );
     setRoadmapResult(result);
     setIsLoading(false);
   };
 
-  const handleCreateProjectFromRoadmap = () => {
+  const handleCreateProjectFromRoadmap = async () => {
     if (!roadmapResult) return;
 
-    const newProj = addProject({
+    const newProj = await addProject({
       name: roadmapResult.title || 'Novo Projeto do Cérebro',
-      description: ideaText,
+      description: roadmapResult.summary || ideaText,
       status: 'active',
-      tags: ['SaaS', 'IA', 'B2B', 'Postgres'],
+      tags: ['Cérebro IA', roadmapResult.complexity],
       budget: Number(budgetGoal) || 25000,
-      deadline: '4 semanas',
-      promptIds: roadmapResult.reusedAssets.prompts.map((p) => p.id),
-      boilerplateIds: roadmapResult.reusedAssets.boilerplates.map((b) => b.id),
-      notes: `Roadmap gerado pelo Cérebro Vyroh:\n${roadmapResult.phases
-        .map((p) => `## ${p.name} (~${p.estimatedDays} dias)\n${p.tasks.map((t) => `- ${t}`).join('\n')}`)
+      deadline: roadmapResult.targetWeeks,
+      promptIds: [],
+      boilerplateIds: [],
+      notes: `Roadmap gerado pelo Cérebro Vyroh:\n${roadmapResult.steps
+        .map((s) => `## ${s.stepNumber}. ${s.title} (${s.duration})\n${s.deliverables.map((d) => `- ${d}`).join('\n')}`)
         .join('\n\n')}`,
     });
 
@@ -182,7 +181,10 @@ export const BrainView: React.FC = () => {
                   Plano Estratégico Concluído
                 </span>
                 <h2 className="text-xl font-bold text-[var(--text-primary)] mt-0.5">{roadmapResult.title}</h2>
-                <p className="text-xs text-[var(--text-secondary)] mt-1">{roadmapResult.description}</p>
+                <p className="text-xs text-[var(--text-secondary)] mt-1">{roadmapResult.summary}</p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1 font-mono">
+                  Complexidade: {roadmapResult.complexity} • Prazo estimado: {roadmapResult.targetWeeks}
+                </p>
               </div>
 
               <button
@@ -202,41 +204,53 @@ export const BrainView: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {roadmapResult.reusedAssets.boilerplates.map((b) => (
-                  <div key={b.id} className="p-3 rounded-xl bg-[#121014] border border-[var(--border)] flex items-start gap-3">
-                    <Layers className="w-4 h-4 text-[#C2410C] shrink-0 mt-0.5" />
+                {roadmapResult.matchedAssets.map((a, idx) => (
+                  <div key={idx} className="p-3 rounded-xl bg-[#121014] border border-[var(--border)] flex items-start gap-3">
+                    {a.type === 'boilerplate' ? (
+                      <Layers className="w-4 h-4 text-[#C2410C] shrink-0 mt-0.5" />
+                    ) : (
+                      <Terminal className="w-4 h-4 text-[#8B35D6] shrink-0 mt-0.5" />
+                    )}
                     <div className="space-y-0.5">
-                      <div className="text-xs font-semibold text-[var(--text-primary)]">Boilerplate: {b.name}</div>
-                      <div className="text-[11px] text-[var(--text-muted)] font-mono truncate">{b.cloneCommand}</div>
-                    </div>
-                  </div>
-                ))}
-
-                {roadmapResult.reusedAssets.prompts.map((p) => (
-                  <div key={p.id} className="p-3 rounded-xl bg-[#121014] border border-[var(--border)] flex items-start gap-3">
-                    <Terminal className="w-4 h-4 text-[#8B35D6] shrink-0 mt-0.5" />
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-semibold text-[var(--text-primary)]">Prompt: {p.title}</div>
-                      <div className="text-[11px] text-[var(--text-muted)] line-clamp-1">{p.description}</div>
+                      <div className="text-xs font-semibold text-[var(--text-primary)]">{a.name}</div>
+                      <div className="text-[11px] text-[var(--text-muted)] line-clamp-2">{a.reason}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Missing Assets / Gap Analysis */}
-            {roadmapResult.missingAssets.length > 0 && (
+            {/* Gap Analysis */}
+            {roadmapResult.gaps.length > 0 && (
               <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-xs space-y-1.5">
                 <div className="font-semibold text-amber-400 font-mono text-[11px]">
                   Análise de Gaps (Ativos recomendados para adquirir ou construir):
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {roadmapResult.missingAssets.map((gap, idx) => (
+                  {roadmapResult.gaps.map((gap, idx) => (
                     <span key={idx} className="px-2 py-0.5 rounded-md bg-[#0F0D11] text-amber-300 border border-amber-500/20 text-[11px]">
                       • {gap}
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Professional Needed (Seção 6/7 do roadmap de produto) */}
+            {roadmapResult.professionalNeeded?.needed && (
+              <div className="p-3.5 rounded-xl bg-[#6B21A8]/10 border border-[#6B21A8]/30 text-xs space-y-1.5">
+                <div className="font-semibold text-[var(--accent-bright)] font-mono text-[11px]">
+                  Profissional recomendado: {roadmapResult.professionalNeeded.role}
+                </div>
+                <p className="text-[var(--text-secondary)]">{roadmapResult.professionalNeeded.reason}</p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {roadmapResult.professionalNeeded.skills.map((sk, idx) => (
+                    <span key={idx} className="px-1.5 py-0.5 rounded bg-[#0F0D11] text-[10px] text-[var(--text-muted)] border border-[var(--border)]">
+                      {sk}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-[10px] text-[var(--text-muted)] font-mono">~{roadmapResult.professionalNeeded.estimatedHours}</div>
               </div>
             )}
           </div>
@@ -248,7 +262,7 @@ export const BrainView: React.FC = () => {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {roadmapResult.phases.map((phase, idx) => (
+              {roadmapResult.steps.map((step, idx) => (
                 <div
                   key={idx}
                   className="p-5 rounded-2xl bg-[#0F0D11] border border-[var(--border)] space-y-3 flex flex-col justify-between shadow-md"
@@ -256,18 +270,18 @@ export const BrainView: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="w-6 h-6 rounded-full bg-[#6B21A8]/20 text-[var(--accent-bright)] font-mono font-bold text-xs flex items-center justify-center border border-[#6B21A8]/40">
-                        {idx + 1}
+                        {step.stepNumber}
                       </span>
                       <span className="text-[11px] font-mono text-[var(--text-muted)] flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        <span>~{phase.estimatedDays} dias</span>
+                        <span>{step.duration}</span>
                       </span>
                     </div>
 
-                    <h4 className="text-sm font-bold text-[var(--text-primary)]">{phase.name}</h4>
+                    <h4 className="text-sm font-bold text-[var(--text-primary)]">{step.title}</h4>
 
                     <div className="space-y-2 pt-2 border-t border-[var(--border)]">
-                      {phase.tasks.map((task, tIdx) => (
+                      {step.deliverables.map((task, tIdx) => (
                         <div key={tIdx} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                           <span className="leading-snug">{task}</span>
@@ -276,10 +290,10 @@ export const BrainView: React.FC = () => {
                     </div>
                   </div>
 
-                  {phase.suggestedVaultItems.length > 0 && (
+                  {step.vaultAssetMatched && (
                     <div className="pt-3 border-t border-[var(--border)] text-[10px] text-[var(--text-muted)]">
                       <span>Usar do cofre: </span>
-                      <strong className="text-[var(--text-primary)]">{phase.suggestedVaultItems.join(', ')}</strong>
+                      <strong className="text-[var(--text-primary)]">{step.vaultAssetMatched}</strong>
                     </div>
                   )}
                 </div>

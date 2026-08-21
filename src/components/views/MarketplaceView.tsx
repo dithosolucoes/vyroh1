@@ -17,7 +17,7 @@ import {
   ExternalLink,
   Plus,
 } from 'lucide-react';
-import { MarketplaceListing, MonetizationFlow } from '../../types';
+import { Listing, MonetizationFlow } from '../../types';
 
 export const MarketplaceView: React.FC = () => {
   const { listings, openModal, setSelectedListingForCheckout, setActiveView, showToast } = useApp();
@@ -45,7 +45,7 @@ export const MarketplaceView: React.FC = () => {
     { id: 'flow_d_subscription', label: 'Fluxo D: Assinatura de Criador' },
   ];
 
-  const handleBuy = (listing: MarketplaceListing) => {
+  const handleBuy = (listing: Listing) => {
     setSelectedListingForCheckout(listing);
     openModal('checkout');
   };
@@ -151,7 +151,7 @@ export const MarketplaceView: React.FC = () => {
               {/* Header Info with flow tag */}
               <div className="flex items-start justify-between gap-2">
                 <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[#121014] text-[#EA580C] border border-[#C2410C]/30">
-                  {item.monetizationFlow.replace('flow_', 'FLUXO ').toUpperCase()}
+                  {(item.monetizationFlow ?? 'flow_b_bundle').replace('flow_', 'FLUXO ').toUpperCase()}
                 </span>
 
                 <div className="flex items-center gap-1 text-xs text-amber-400 font-mono font-semibold">

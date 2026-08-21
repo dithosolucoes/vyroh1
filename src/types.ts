@@ -116,6 +116,8 @@ export interface SOPStep {
   id: string;
   title: string;
   details?: string;
+  instructions?: string;
+  commandSnippet?: string;
   completed: boolean;
 }
 
@@ -126,6 +128,7 @@ export interface SOP {
   description: string;
   category: 'onboarding' | 'deploy' | 'launch' | 'marketing' | 'support' | 'sales' | 'security';
   steps: SOPStep[];
+  tags?: string[];
   estimatedMinutes?: number;
   createdAt: string;
   updatedAt: string;
@@ -229,34 +232,6 @@ export type SubscriptionPlan = 'free' | 'pro' | 'enterprise';
 export type PromptItem = Prompt;
 export type SOPItem = SOP;
 
-export interface MarketplaceListing {
-  id: string;
-  sellerId?: string;
-  sellerOrgId?: string;
-  sellerName: string;
-  sellerAvatar?: string;
-  monetizationFlow: MonetizationFlow;
-  type?: ListingType;
-  sourceRecordType?: 'prompt' | 'boilerplate' | 'sop' | 'bundle';
-  sourceRecordId?: string;
-  title: string;
-  description: string;
-  priceCents: number; // e.g. 9700 = R$ 97,00
-  currency?: string;
-  licenseType: LicenseType;
-  billingPeriod?: 'one_time' | 'monthly' | 'yearly';
-  status: 'active' | 'paused' | 'under_review';
-  rating: number;
-  reviewsCount: number;
-  salesCount: number;
-  tags: string[];
-  category: string;
-  includedItems?: string[];
-  assetType?: string;
-  repoAccessUrl?: string;
-  createdAt: string;
-}
-
 export interface AIRoadmapResult {
   title: string;
   description: string;
@@ -271,26 +246,6 @@ export interface AIRoadmapResult {
     tasks: string[];
     suggestedVaultItems: string[];
   }[];
-}
-
-export interface CommunityPost {
-  id: string;
-  title: string;
-  authorName: string;
-  authorAvatar?: string;
-  authorRole?: string;
-  category: string;
-  content: string;
-  tags: string[];
-  upvotes: number;
-  aiSuggestedAnswer?: string;
-  replies: {
-    id: string;
-    authorName: string;
-    content: string;
-    createdAt: string;
-  }[];
-  createdAt: string;
 }
 
 export interface AdminSystemConfig {
@@ -318,12 +273,16 @@ export interface AdminSystemConfig {
 }
 
 export interface Listing {
-
   id: string;
+  sellerId?: string;
   sellerOrgId: string;
   sellerName: string;
   sellerAvatar?: string;
   type: ListingType;
+  monetizationFlow?: MonetizationFlow;
+  billingPeriod?: 'one_time' | 'monthly' | 'yearly';
+  assetType?: string;
+  repoAccessUrl?: string;
   sourceRecordType?: 'prompt' | 'boilerplate' | 'sop' | 'bundle';
   sourceRecordId?: string;
   title: string;
@@ -353,7 +312,11 @@ export interface Order {
   sellerPayoutCents: number;
   licenseType: LicenseType;
   status: 'completed' | 'refunded';
+  paymentMethod?: string;
+  licenseKey?: string;
+  downloadUrl?: string;
   itemAccessUrl?: string;
+  repoAccessUrl?: string;
   downloadContent?: string;
   createdAt: string;
 }

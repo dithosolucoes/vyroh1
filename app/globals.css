@@ -1,25 +1,131 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-action: var(--action);
+  --color-action-foreground: var(--action-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+/*
+  Paleta oficial do Vyroh — Documentação Seção 30.
+  Roxo ametista (#6B21A8) = cofre / IA. Laranja queimado (#C2410C) = marketplace / ação.
+  Dark-first: :root já carrega a paleta escura; [data-theme="light"] sobrescreve.
+*/
 :root {
-  --bg-primary: #09070B;
-  --bg-secondary: #0F0D11;
-  --bg-tertiary: #17141C;
-  --bg-card: #0F0D11;
+  --radius: 0.625rem;
+
+  /* Convenção shadcn/ui (consumida pelos componentes em src/components/ui) */
+  --background: #050506;
+  --foreground: #F3EEFB;
+  --card: #121014;
+  --card-foreground: #F3EEFB;
+  --popover: #121014;
+  --popover-foreground: #F3EEFB;
+  --primary: #6B21A8;
+  --primary-foreground: #F3EEFB;
+  --action: #C2410C;
+  --action-foreground: #F3EEFB;
+  --secondary: #0F0D11;
+  --secondary-foreground: #F3EEFB;
+  --muted: #0F0D11;
+  --muted-foreground: #A79BC4;
+  --accent: #1A1620;
+  --accent-foreground: #F3EEFB;
+  --destructive: #E5484D;
   --border: #231E2A;
-  --border-subtle: #1C1822;
-  --text-primary: #F3F1F5;
-  --text-secondary: #9B94A4;
-  --text-muted: #5C5566;
-  --accent-purple: #7E43EB;
-  --accent-purple-light: #9B6BF7;
-  --accent-purple-dim: #7E43EB1A;
+  --input: #231E2A;
+  --ring: #8B35D6;
+
+  /* Aliases semânticos usados diretamente nas telas (Sidebar, DashboardView, AuthView, etc.) */
+  --bg: #050506;
+  --surface: #0F0D11;
+  --surface-raised: #121014;
+  --surface-hover: #1A1620;
+  --accent-bright: #8B35D6;
+  --accent-tint: rgba(107, 33, 168, 0.16);
+  --card-edge: rgba(194, 65, 12, 0.32);
+  --action-bright: #EA580C;
+  --action-tint: rgba(194, 65, 12, 0.16);
+  --text-primary: #F3EEFB;
+  --text-secondary: #A79BC4;
+  --text-muted: #6E6480;
+  --border-strong: rgba(243, 238, 251, 0.18);
+  --danger: #E5484D;
+  --success: #10B981;
+  --warning: #F59E0B;
+}
+
+:root[data-theme="light"] {
+  --background: #FBFAFD;
+  --foreground: #17121F;
+  --card: #FFFFFF;
+  --card-foreground: #17121F;
+  --popover: #FFFFFF;
+  --popover-foreground: #17121F;
+  --primary: #6B21A8;
+  --primary-foreground: #FFFFFF;
+  --action: #C2410C;
+  --action-foreground: #FFFFFF;
+  --secondary: #F7F5FA;
+  --secondary-foreground: #17121F;
+  --muted: #F7F5FA;
+  --muted-foreground: #6B6178;
+  --accent: #EFEAF5;
+  --accent-foreground: #17121F;
+  --destructive: #C4293D;
+  --border: rgba(23, 18, 31, 0.10);
+  --input: rgba(23, 18, 31, 0.10);
+  --ring: #7C3AED;
+
+  --bg: #FBFAFD;
+  --surface: #FFFFFF;
+  --surface-raised: #F7F5FA;
+  --surface-hover: #EFEAF5;
+  --accent-bright: #7C3AED;
+  --accent-tint: rgba(107, 33, 168, 0.08);
+  --card-edge: rgba(194, 65, 12, 0.22);
+  --action-bright: #EA580C;
+  --action-tint: rgba(194, 65, 12, 0.08);
+  --text-primary: #17121F;
+  --text-secondary: #6B6178;
+  --text-muted: #948C9F;
+  --border-strong: rgba(23, 18, 31, 0.18);
+  --danger: #C4293D;
+  --success: #059669;
+  --warning: #D97706;
 }
 
 body {
-  background-color: var(--bg-primary);
+  background-color: var(--bg);
   color: var(--text-primary);
-  font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* Custom Scrollbar for Vyroh Dark Theme */
@@ -28,12 +134,12 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #09070B;
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #231E2A;
+  background: var(--border-strong);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #7E43EB;
+  background: var(--accent-bright);
 }

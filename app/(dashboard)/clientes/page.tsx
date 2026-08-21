@@ -1,6 +1,6 @@
 "use client";
 
-import { ClientsView } from "../../../src/components/views/ClientsView";
+import { ClientsView } from "@/src/components/views/ClientsView";
 
 export default function ClientsPage() {
   return <ClientsView />;

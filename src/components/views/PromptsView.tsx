@@ -61,7 +61,7 @@ export const PromptsView: React.FC = () => {
     });
 
     const result = await testPromptAI(activePrompt.id, testVariables);
-    setAiOutput(result);
+    setAiOutput(result.output);
     setIsGenerating(false);
   };
 
@@ -146,9 +146,9 @@ export const PromptsView: React.FC = () => {
                     <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
                       {p.title}
                       {p.visibility === 'public' ? (
-                        <Globe className="w-3 h-3 text-emerald-400" title="Público / Marketplace" />
+                        <span title="Público / Marketplace"><Globe className="w-3 h-3 text-emerald-400" /></span>
                       ) : (
-                        <Lock className="w-3 h-3 text-[var(--text-muted)]" title="Privado" />
+                        <span title="Privado"><Lock className="w-3 h-3 text-[var(--text-muted)]" /></span>
                       )}
                     </h3>
                     <p className="text-xs text-[var(--text-secondary)] line-clamp-1">{p.description}</p>
@@ -169,7 +169,7 @@ export const PromptsView: React.FC = () => {
 
                 <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] pt-2 border-t border-[var(--border)]">
                   <span>Categoria: {p.category}</span>
-                  <span className="font-mono">{p.variables.length} variáveis</span>
+                  <span className="font-mono">{(p.variables?.length ?? 0)} variáveis</span>
                 </div>
               </div>
             );
@@ -213,7 +213,7 @@ export const PromptsView: React.FC = () => {
                     title="Histórico de Versões"
                   >
                     <History className="w-3.5 h-3.5" />
-                    <span>Versões ({activePrompt.history.length})</span>
+                    <span>Versões ({activePrompt.versions.length})</span>
                   </button>
                 </div>
               </div>
@@ -229,13 +229,13 @@ export const PromptsView: React.FC = () => {
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    {activePrompt.history.map((h, idx) => (
+                    {activePrompt.versions.map((h, idx) => (
                       <div key={idx} className="p-2.5 rounded-lg bg-[#050506] border border-[var(--border)] space-y-1">
                         <div className="flex items-center justify-between font-mono text-[11px]">
-                          <span className="font-bold text-[var(--accent-bright)]">Versão {h.version}</span>
-                          <span className="text-[var(--text-muted)]">{h.date}</span>
+                          <span className="font-bold text-[var(--accent-bright)]">Versão {h.versionNumber}</span>
+                          <span className="text-[var(--text-muted)]">{h.createdAt.split('T')[0]}</span>
                         </div>
-                        <p className="text-[11px] text-[var(--text-secondary)]">{h.changes}</p>
+                        <p className="text-[11px] text-[var(--text-secondary)]">{h.changeNotes}</p>
                       </div>
                     ))}
                   </div>
@@ -255,14 +255,14 @@ export const PromptsView: React.FC = () => {
               </div>
 
               {/* Dynamic Variables Inputs */}
-              {activePrompt.variables.length > 0 && (
+              {(activePrompt.variables?.length ?? 0) > 0 && (
                 <div className="space-y-3 p-4 rounded-xl bg-[#121014] border border-[var(--border)]">
                   <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider font-mono">
                     Preencher Variáveis do Prompt:
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {activePrompt.variables.map((varName) => (
+                    {(activePrompt.variables ?? []).map((varName) => (
                       <div key={varName} className="space-y-1">
                         <label className="text-xs font-mono text-[var(--accent-bright)]">
                           {`{{${varName}}}`}

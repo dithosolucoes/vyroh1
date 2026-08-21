@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, schema } from "../../../../src/lib/db";
-import { getSession, hashPassword, verifyPassword } from "../../../../src/lib/auth";
+import { db, schema } from "@/src/lib/db";
+import { getSession, hashPassword, verifyPassword } from "@/src/lib/auth";
 import { eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {

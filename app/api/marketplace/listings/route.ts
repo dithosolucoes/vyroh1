@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, schema } from "../../../../../src/lib/db";
-import { getSession } from "../../../../../src/lib/auth";
+import { db, schema } from "@/src/lib/db";
+import { getSession } from "@/src/lib/auth";
 import { desc } from "drizzle-orm";
 
 export async function GET() {

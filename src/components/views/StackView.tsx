@@ -18,17 +18,17 @@ export const StackView: React.FC = () => {
 
   const filtered = subscriptions.filter(
     (s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.serviceName.toLowerCase().includes(search.toLowerCase()) ||
       s.category.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalMonthlyUSD = subscriptions
     .filter((s) => s.currency === 'USD')
-    .reduce((acc, s) => acc + (s.billingCycle === 'monthly' ? s.cost : s.cost / 12), 0);
+    .reduce((acc, s) => acc + s.costMonthly, 0);
 
   const totalMonthlyBRL = subscriptions
     .filter((s) => s.currency === 'BRL')
-    .reduce((acc, s) => acc + (s.billingCycle === 'monthly' ? s.cost : s.cost / 12), 0);
+    .reduce((acc, s) => acc + s.costMonthly, 0);
 
   const estimatedTotalBRL = totalMonthlyBRL + totalMonthlyUSD * 5.75;
 
@@ -95,7 +95,7 @@ export const StackView: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">{s.name}</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">{s.serviceName}</h3>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#121014] text-[var(--text-muted)] border border-[var(--border)] mt-1 inline-block">
                     {s.category.toUpperCase()}
                   </span>
@@ -103,10 +103,10 @@ export const StackView: React.FC = () => {
 
                 <div className="text-right">
                   <div className="text-sm font-bold text-emerald-400 font-mono">
-                    {s.currency === 'USD' ? '$' : 'R$'} {s.cost.toFixed(2)}
+                    {s.currency === 'USD' ? '$' : 'R$'} {s.costMonthly.toFixed(2)}
                   </div>
                   <div className="text-[10px] text-[var(--text-muted)]">
-                    {s.billingCycle === 'monthly' ? 'mensal' : 'anual'}
+                    mensal
                   </div>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export const StackView: React.FC = () => {
 
               <button
                 onClick={() => {
-                  if (confirm(`Remover ${s.name} do controle de assinaturas?`)) {
+                  if (confirm(`Remover ${s.serviceName} do controle de assinaturas?`)) {
                     deleteSubscription(s.id);
                   }
                 }}

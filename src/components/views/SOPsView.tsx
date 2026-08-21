@@ -25,7 +25,7 @@ export const SOPsView: React.FC = () => {
     const matchesSearch =
       s.title.toLowerCase().includes(search.toLowerCase()) ||
       s.description.toLowerCase().includes(search.toLowerCase()) ||
-      s.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+      (s.tags ?? []).some((t) => t.toLowerCase().includes(search.toLowerCase()));
     return matchesCat && matchesSearch;
   });
 

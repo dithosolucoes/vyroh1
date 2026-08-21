@@ -6,13 +6,19 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
+        hostname: '**',
       },
     ],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+  // TODO (Marco 8 do roadmap): eslint-config-next 16 é incompatível com eslint 9.39
+  // nesta instalação (erro de estrutura circular). Fixar versão compatível e reativar.
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

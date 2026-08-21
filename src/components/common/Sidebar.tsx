@@ -56,13 +56,13 @@ export const Sidebar: React.FC = () => {
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
 
   const activeProjectsCount = projects.filter((p) => p.status !== 'archived').length;
-  const sellerListingIds = new Set(listings.filter((l) => l.sellerId === currentUser.id || l.sellerOrgId === currentUser.orgId).map((l) => l.id));
-  const myOrdersCount = orders.filter((o) => (o as any).sellerId === currentUser.id || sellerListingIds.has(o.listingId)).length;
+  const sellerListingIds = new Set(listings.filter((l) => l.sellerOrgId === currentUser.orgId).map((l) => l.id));
+  const myOrdersCount = orders.filter((o) => sellerListingIds.has(o.listingId)).length;
 
   const isDark = theme === 'dark';
 
   // Strict domain definitions for 100% separated workspaces
-  const getSectionsForDomain = () => {
+  const getSectionsForDomain = (): { title: string; items: NavItem[] }[] => {
     switch (portalDomain) {
       case 'marketplace':
         return [

@@ -11,7 +11,7 @@ import {
   ShoppingBag,
   ArrowRight,
 } from 'lucide-react';
-import { MarketplaceListing } from '../../types';
+import { Listing } from '../../types';
 
 export const SellerStoreView: React.FC = () => {
   const { listings, setActiveView, setSelectedListingForCheckout, openModal } = useApp();
@@ -29,7 +29,7 @@ export const SellerStoreView: React.FC = () => {
     verified: true,
   };
 
-  const handleBuy = (item: MarketplaceListing) => {
+  const handleBuy = (item: Listing) => {
     setSelectedListingForCheckout(item);
     openModal('checkout');
   };

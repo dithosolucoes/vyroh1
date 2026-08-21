@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import { AppProvider } from "@/src/context/AppContext";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -23,8 +30,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="dark">
-      <body className={`${jakarta.variable} font-sans bg-[#09070B] text-[#F3F1F5] antialiased selection:bg-purple-500 selection:text-white`}>
-        {children}
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-[#09070B] text-[#F3F1F5] antialiased selection:bg-purple-500 selection:text-white`}>
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );

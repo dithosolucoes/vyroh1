@@ -17,7 +17,7 @@ import {
   QrCode,
   CheckCircle2,
 } from 'lucide-react';
-import { MonetizationFlow, LicenseType } from '../../types';
+import { MonetizationFlow, LicenseType, Listing } from '../../types';
 
 export const AllModals: React.FC = () => {
   const {
@@ -30,8 +30,8 @@ export const AllModals: React.FC = () => {
     addSOP,
     addSubscription,
     addListing,
-    checkout,
-    selectedListingForCheckout,
+    purchaseListing,
+    modalProps,
     showToast,
     clients,
     prompts,
@@ -39,6 +39,10 @@ export const AllModals: React.FC = () => {
     setActiveView,
     setSelectedProjectId,
   } = useApp();
+
+  // O checkout é aberto via openModal('checkout', listing) — a listagem viaja no modalProps.
+  // TODO (Marco 4 do roadmap): nenhum botão "Comprar" chama openModal('checkout', listing) ainda.
+  const selectedListingForCheckout = modalProps as Listing | null;
 
   // Project state
   const [projName, setProjName] = useState('');
@@ -51,7 +55,7 @@ export const AllModals: React.FC = () => {
   // Prompt state
   const [promptTitle, setPromptTitle] = useState('');
   const [promptDesc, setPromptDesc] = useState('');
-  const [promptCategory, setPromptCategory] = useState('arquitetura');
+  const [promptCategory, setPromptCategory] = useState<'custom' | 'code' | 'marketing' | 'sales' | 'product' | 'copywriting' | 'agent'>('code');
   const [promptContent, setPromptContent] = useState('');
   const [promptTags, setPromptTags] = useState('ia, agente');
 
@@ -71,7 +75,7 @@ export const AllModals: React.FC = () => {
   // SOP state
   const [sopTitle, setSopTitle] = useState('');
   const [sopDesc, setSopDesc] = useState('');
-  const [sopCategory, setSopCategory] = useState('deploy');
+  const [sopCategory, setSopCategory] = useState<'marketing' | 'sales' | 'onboarding' | 'deploy' | 'launch' | 'support' | 'security'>('deploy');
   const [sopMin, setSopMin] = useState('15');
 
   // Subscription state
@@ -79,7 +83,7 @@ export const AllModals: React.FC = () => {
   const [subCost, setSubCost] = useState('20');
   const [subCycle, setSubCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [subCurrency, setSubCurrency] = useState<'USD' | 'BRL'>('USD');
-  const [subCat, setSubCat] = useState('AI & Models');
+  const [subCat, setSubCat] = useState<'marketing' | 'infra' | 'ai' | 'design' | 'dev_tools' | 'database'>('ai');
 
   // Listing state
   const [listTitle, setListTitle] = useState('');
@@ -96,11 +100,11 @@ export const AllModals: React.FC = () => {
 
   if (!activeModal) return null;
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projName.trim()) return;
 
-    const newProj = addProject({
+    const newProj = await addProject({
       name: projName.trim(),
       description: projDesc.trim(),
       status: 'active',
@@ -118,11 +122,11 @@ export const AllModals: React.FC = () => {
     showToast('Projeto criado com sucesso!');
   };
 
-  const handleCreatePrompt = (e: React.FormEvent) => {
+  const handleCreatePrompt = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promptTitle.trim() || !promptContent.trim()) return;
 
-    addPrompt({
+    await addPrompt({
       title: promptTitle.trim(),
       description: promptDesc.trim(),
       category: promptCategory,
@@ -137,11 +141,11 @@ export const AllModals: React.FC = () => {
     showToast('Prompt versionado e guardado no cofre!');
   };
 
-  const handleCreateBoilerplate = (e: React.FormEvent) => {
+  const handleCreateBoilerplate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bpName.trim()) return;
 
-    addBoilerplate({
+    await addBoilerplate({
       name: bpName.trim(),
       description: bpDesc.trim(),
       repoUrl: bpRepo.trim(),
@@ -155,17 +159,17 @@ export const AllModals: React.FC = () => {
     showToast('Repositório indexado no cofre!');
   };
 
-  const handleCreateClient = (e: React.FormEvent) => {
+  const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientName.trim()) return;
 
-    addClient({
+    await addClient({
       name: clientName.trim(),
       company: clientCompany.trim(),
       email: clientEmail.trim(),
       phone: clientPhone.trim(),
       status: 'active',
-      totalRevenue: 0,
+      totalValue: 0,
       projectIds: [],
       notes: 'Cadastrado no CRM do Vyroh.',
     });
@@ -175,11 +179,11 @@ export const AllModals: React.FC = () => {
     showToast('Cliente cadastrado com sucesso!');
   };
 
-  const handleCreateSOP = (e: React.FormEvent) => {
+  const handleCreateSOP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sopTitle.trim()) return;
 
-    addSOP({
+    await addSOP({
       title: sopTitle.trim(),
       description: sopDesc.trim(),
       category: sopCategory,
@@ -196,14 +200,13 @@ export const AllModals: React.FC = () => {
     showToast('Playbook SOP criado!');
   };
 
-  const handleCreateSubscription = (e: React.FormEvent) => {
+  const handleCreateSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subName.trim()) return;
 
-    addSubscription({
-      name: subName.trim(),
-      cost: Number(subCost) || 20,
-      billingCycle: subCycle,
+    await addSubscription({
+      serviceName: subName.trim(),
+      costMonthly: subCycle === 'yearly' ? Math.round((Number(subCost) || 20) / 12) : (Number(subCost) || 20),
       currency: subCurrency,
       category: subCat,
       renewalDate: '2026-04-15',
@@ -215,11 +218,11 @@ export const AllModals: React.FC = () => {
     showToast('Serviço adicionado ao monitor de custos!');
   };
 
-  const handleCreateListing = (e: React.FormEvent) => {
+  const handleCreateListing = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!listTitle.trim()) return;
 
-    addListing({
+    await addListing({
       title: listTitle.trim(),
       description: listDesc.trim(),
       priceCents: (Number(listPrice) || 99) * 100,
@@ -236,16 +239,19 @@ export const AllModals: React.FC = () => {
     showToast('Anúncio publicado no Marketplace Vyroh!');
   };
 
-  const handleExecuteCheckout = () => {
+  const handleExecuteCheckout = async () => {
     if (!selectedListingForCheckout) return;
     setIsProcessingCheckout(true);
 
-    setTimeout(() => {
-      checkout(selectedListingForCheckout.id, paymentMethod);
-      setIsProcessingCheckout(false);
+    try {
+      await purchaseListing(selectedListingForCheckout, selectedListingForCheckout.licenseType);
       setCheckoutSuccess(true);
       showToast('Pagamento confirmado e acesso liberado!');
-    }, 900);
+    } catch (e: any) {
+      showToast(`Erro no checkout: ${e.message || 'tente novamente'}`);
+    } finally {
+      setIsProcessingCheckout(false);
+    }
   };
 
   return (
@@ -431,14 +437,16 @@ export const AllModals: React.FC = () => {
                 <label className="text-[var(--text-muted)]">Categoria</label>
                 <select
                   value={promptCategory}
-                  onChange={(e) => setPromptCategory(e.target.value)}
+                  onChange={(e) => setPromptCategory(e.target.value as typeof promptCategory)}
                   className="w-full bg-[#121014] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-[var(--accent-bright)] focus:outline-none"
                 >
-                  <option value="arquitetura">Arquitetura</option>
-                  <option value="frontend">Frontend</option>
-                  <option value="backend">Backend</option>
-                  <option value="vendas">Vendas / Copy</option>
-                  <option value="gestao">Gestão</option>
+                  <option value="code">Código</option>
+                  <option value="agent">Agente / Automação</option>
+                  <option value="marketing">Marketing</option>
+                  <option value="copywriting">Copywriting</option>
+                  <option value="sales">Vendas</option>
+                  <option value="product">Produto / Gestão</option>
+                  <option value="custom">Personalizado</option>
                 </select>
               </div>
 

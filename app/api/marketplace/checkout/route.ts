@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, schema } from "../../../../../src/lib/db";
-import { getSession } from "../../../../../src/lib/auth";
-import { createStripeCheckoutSession, CommissionFlowType } from "../../../../../src/lib/stripe";
+import { db, schema } from "@/src/lib/db";
+import { getSession } from "@/src/lib/auth";
+import { createStripeCheckoutSession, CommissionFlowType } from "@/src/lib/stripe";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {

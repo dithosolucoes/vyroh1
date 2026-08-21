@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, schema } from "../../../../../src/lib/db";
-import { getSession } from "../../../../../src/lib/auth";
+import { db, schema } from "@/src/lib/db";
+import { getSession } from "@/src/lib/auth";
 import { eq, and } from "drizzle-orm";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+type RouteParams = { params: Promise<{ id: string }> };
+
+export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const { user } = await getSession(req);
     const orgId = user?.orgId || "org_default";
 
     const project = await db.query.projects.findFirst({
-      where: and(eq(schema.projects.id, params.id), eq(schema.projects.orgId, orgId)),
+      where: and(eq(schema.projects.id, id), eq(schema.projects.orgId, orgId)),
     });
 
     if (!project) {
@@ -22,8 +25,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const { user } = await getSession(req);
     if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
@@ -39,7 +43,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         roadmapPlan: body.roadmapPlan,
         updatedAt: new Date(),
       })
-      .where(and(eq(schema.projects.id, params.id), eq(schema.projects.orgId, user.orgId)))
+      .where(and(eq(schema.projects.id, id), eq(schema.projects.orgId, user.orgId)))
       .returning();
 
     return NextResponse.json({ success: true, data: updated });
@@ -48,14 +52,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const { user } = await getSession(req);
     if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
     await db
       .delete(schema.projects)
-      .where(and(eq(schema.projects.id, params.id), eq(schema.projects.orgId, user.orgId)));
+      .where(and(eq(schema.projects.id, id), eq(schema.projects.orgId, user.orgId)));
 
     return NextResponse.json({ success: true, deleted: true });
   } catch (error: any) {

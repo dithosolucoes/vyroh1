@@ -147,7 +147,7 @@ export const SellerDashboardView: React.FC = () => {
 
                     <td className="py-3 px-4">
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1A1620] text-[#EA580C] border border-[#C2410C]/30">
-                        {listing.monetizationFlow.replace('flow_', '').toUpperCase()}
+                        {(listing.monetizationFlow ?? 'flow_b_bundle').replace('flow_', '').toUpperCase()}
                       </span>
                     </td>
 

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   User,
@@ -25,6 +27,8 @@ import {
   CategoryConfig,
   KYCRequirement,
   AIUsageLimit,
+  SubscriptionPlan,
+  AdminSystemConfig,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -157,6 +161,7 @@ interface AppContextType {
   deleteProject: (id: string) => Promise<void>;
 
   addPrompt: (data: Partial<Prompt>) => Promise<Prompt>;
+  updatePrompt: (id: string, data: Partial<Prompt>) => Promise<void>;
   updatePromptVersion: (id: string, newContent: string, changeNotes: string) => Promise<void>;
   toggleFavoritePrompt: (id: string) => Promise<void>;
   deletePrompt: (id: string) => Promise<void>;
@@ -171,6 +176,7 @@ interface AppContextType {
   deleteClient: (id: string) => Promise<void>;
 
   addSOP: (data: Partial<SOP>) => Promise<SOP>;
+  updateSOP: (id: string, data: Partial<SOP>) => Promise<void>;
   toggleSOPStep: (sopId: string, stepId: string) => Promise<void>;
   deleteSOP: (id: string) => Promise<void>;
 
@@ -190,16 +196,23 @@ interface AppContextType {
   addListing: (data: Partial<Listing>) => Promise<Listing>;
   updateListing: (id: string, data: Partial<Listing>) => Promise<void>;
   pauseListing: (id: string) => Promise<void>;
+  deleteListing: (id: string) => Promise<void>;
+  selectedListingForCheckout: Listing | null;
+  setSelectedListingForCheckout: (listing: Listing | null) => void;
   purchaseListing: (listing: Listing, licenseType: Listing['licenseType']) => Promise<Order>;
   subscribeToCreator: (listing: Listing) => Promise<CreatorSubscription>;
   cancelCreatorSubscription: (id: string) => void;
   requestSellerPayout: (amountCents: number) => boolean;
+  upgradePlan: (planId: SubscriptionPlan) => Promise<void>;
 
   // Community Actions
   createCommunityTopic: (data: Partial<CommunityTopic>) => Promise<CommunityTopic>;
   addTopicReply: (topicId: string, content: string) => Promise<void>;
+  upvoteTopic: (topicId: string) => Promise<void>;
 
   // Admin Config Actions
+  adminConfig: AdminSystemConfig;
+  updateAdminConfig: (data: Partial<AdminSystemConfig>) => void;
   updateCommissionRule: (flowType: string, percentage: number) => Promise<void>;
   updatePricingPlan: (id: string, data: Partial<PricingPlan>) => void;
   updateLicenseType: (id: string, data: Partial<LicenseTypeConfig>) => void;
@@ -378,33 +391,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return 'prm_1';
   });
 
+  const [selectedListingForCheckout, setSelectedListingForCheckout] = useState<Listing | null>(null);
+
+  const [adminConfig, setAdminConfig] = useState<AdminSystemConfig>(() =>
+    loadStorage('admin_config', {
+      commissionRates: {
+        flow_a_asset: 0,
+        flow_b_bundle: 10,
+        flow_c_template: 12.5,
+        flow_d_subscription: 15,
+      },
+      minPriceCents: 500,
+      maxPriceCents: 5000000,
+      planPricing: {
+        proMonthlyCents: 8900,
+        enterpriseMonthlyCents: 19900,
+      },
+      allowedLicenseTypes: ['personal', 'commercial', 'commercial_solo', 'resale', 'extended', 'mit', 'agency_unlimited'],
+      kycRequirements: {
+        requireStripeConnect: true,
+        requireDocumentVerification: false,
+      },
+      aiEngineLimits: {
+        defaultModel: 'gemini-2.5-flash',
+        maxMonthlyTokensPerFreeUser: 50000,
+      },
+    } as AdminSystemConfig)
+  );
+
+  useEffect(() => saveStorage('admin_config', adminConfig), [adminConfig]);
+
+  const updateAdminConfig = (data: Partial<AdminSystemConfig>) => {
+    setAdminConfig((prev) => ({ ...prev, ...data }));
+    showToast('Configuração administrável atualizada.');
+  };
+
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>('usr_seller_1');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [portalDomain, setPortalDomainState] = useState<PortalDomain>(() => {
     return getDomainForView(activeView);
   });
-
-  const setPortalDomain = useCallback((portal: PortalDomain) => {
-    setPortalDomainState(portal);
-    switch (portal) {
-      case 'vault':
-        setActiveView('dashboard');
-        break;
-      case 'marketplace':
-        setActiveView('marketplace');
-        break;
-      case 'seller':
-        setActiveView('vender_dashboard');
-        break;
-      case 'admin':
-        setActiveView('admin_configuracoes');
-        break;
-      case 'landing':
-        setActiveView('landing');
-        break;
-    }
-  }, [setActiveView]);
 
   useEffect(() => {
     setPortalDomainState(getDomainForView(activeView));
@@ -433,6 +460,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       window.history.pushState(null, '', canonicalPath);
     }
   }, [selectedProjectId, selectedSellerId]);
+
+  const setPortalDomain = useCallback((portal: PortalDomain) => {
+    setPortalDomainState(portal);
+    switch (portal) {
+      case 'vault':
+        setActiveView('dashboard');
+        break;
+      case 'marketplace':
+        setActiveView('marketplace');
+        break;
+      case 'seller':
+        setActiveView('vender_dashboard');
+        break;
+      case 'admin':
+        setActiveView('admin_configuracoes');
+        break;
+      case 'landing':
+        setActiveView('landing');
+        break;
+    }
+  }, [setActiveView]);
 
   // Listen to browser Back and Forward navigation buttons
   useEffect(() => {
@@ -847,6 +895,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Nova versão do prompt salva no histórico!');
   };
 
+  const updatePrompt = async (id: string, data: Partial<Prompt>) => {
+    setPrompts((prev) => prev.map((p) => (p.id === id ? { ...p, ...data, updatedAt: new Date().toISOString() } : p)));
+    apiFetch(`/api/prompts/${id}`, { method: 'PUT', body: JSON.stringify(data) }).catch(() => {});
+    showToast('Prompt atualizado.');
+  };
+
   const toggleFavoritePrompt = async (id: string) => {
     setPrompts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, isFavorite: !p.isFavorite } : p))
@@ -1013,6 +1067,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       })
     );
+  };
+
+  const updateSOP = async (id: string, data: Partial<SOP>) => {
+    setSOPs((prev) => prev.map((s) => (s.id === id ? { ...s, ...data, updatedAt: new Date().toISOString() } : s)));
+    apiFetch(`/api/sops/${id}`, { method: 'PUT', body: JSON.stringify(data) }).catch(() => {});
   };
 
   const deleteSOP = async (id: string) => {
@@ -1208,6 +1267,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const deleteListing = async (id: string) => {
+    setListings((prev) => prev.filter((l) => l.id !== id));
+    apiFetch(`/api/marketplace/listings/${id}`, { method: 'DELETE' }).catch(() => {});
+    showToast('Listagem removida do Marketplace.');
+  };
+
   const purchaseListing = async (listing: Listing, licenseType: Listing['licenseType']): Promise<Order> => {
     const ruleType = listing.type === 'service' ? 'D' : listing.type === 'creator_subscription' ? 'C' : 'B';
     const rule = commissionRules.find((r) => r.flowType === ruleType) || commissionRules[1];
@@ -1273,6 +1338,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((s) => (s.id === id ? { ...s, status: 'cancelled' } : s))
     );
     showToast('Assinatura cancelada.');
+  };
+
+  const upgradePlan = async (planId: SubscriptionPlan) => {
+    setCurrentUser((prev) => ({ ...prev, plan: planId }));
+    apiFetch('/api/users/plan', { method: 'PUT', body: JSON.stringify({ plan: planId }) }).catch(() => {});
+    showToast(`Plano atualizado para ${planId.toUpperCase()}!`);
   };
 
   const requestSellerPayout = (amountCents: number): boolean => {
@@ -1346,6 +1417,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     showToast('Tópico postado na comunidade! A IA cruzou ativos compatíveis.');
     return newTopic;
+  };
+
+  const upvoteTopic = async (topicId: string) => {
+    setCommunityTopics((prev) =>
+      prev.map((t) => (t.id === topicId ? { ...t, likesCount: t.likesCount + 1 } : t))
+    );
   };
 
   const addTopicReply = async (topicId: string, content: string) => {
@@ -1508,6 +1585,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         archiveProject,
         deleteProject,
         addPrompt,
+        updatePrompt,
         updatePromptVersion,
         toggleFavoritePrompt,
         deletePrompt,
@@ -1519,6 +1597,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateClient,
         deleteClient,
         addSOP,
+        updateSOP,
         toggleSOPStep,
         deleteSOP,
         addSubscription,
@@ -1532,12 +1611,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addListing,
         updateListing,
         pauseListing,
+        deleteListing,
+        selectedListingForCheckout,
+        setSelectedListingForCheckout,
         purchaseListing,
         subscribeToCreator,
         cancelCreatorSubscription,
         requestSellerPayout,
+        upgradePlan,
         createCommunityTopic,
         addTopicReply,
+        upvoteTopic,
+        adminConfig,
+        updateAdminConfig,
         updateCommissionRule,
         updatePricingPlan,
         updateLicenseType,
