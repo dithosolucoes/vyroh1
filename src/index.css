@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg: #050506;
+    --surface: #0F0D11;
+    --surface-raised: #121014;
+    --surface-hover: #1A1620;
+    --accent: #6B21A8;
+    --accent-bright: #8B35D6;
+    --accent-tint: rgba(107, 33, 168, 0.16);
+    --card-edge: rgba(194, 65, 12, 0.32);
+    --action: #C2410C;
+    --action-bright: #EA580C;
+    --action-tint: rgba(194, 65, 12, 0.16);
+    --text-primary: #F3EEFB;
+    --text-secondary: #A79BC4;
+    --text-muted: #6E6480;
+    --border: rgba(243, 238, 251, 0.10);
+    --border-strong: rgba(243, 238, 251, 0.18);
+    --danger: #E5484D;
+    --success: #10B981;
+    --warning: #F59E0B;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #FBFAFD;
+    --surface: #FFFFFF;
+    --surface-raised: #F7F5FA;
+    --surface-hover: #EFEAF5;
+    --accent: #6B21A8;
+    --accent-bright: #7C3AED;
+    --accent-tint: rgba(107, 33, 168, 0.08);
+    --card-edge: rgba(194, 65, 12, 0.22);
+    --action: #C2410C;
+    --action-bright: #EA580C;
+    --action-tint: rgba(194, 65, 12, 0.08);
+    --text-primary: #17121F;
+    --text-secondary: #6B6178;
+    --text-muted: #948C9F;
+    --border: rgba(23, 18, 31, 0.10);
+    --border-strong: rgba(23, 18, 31, 0.18);
+    --danger: #C4293D;
+    --success: #059669;
+    --warning: #D97706;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    selection-background-color: var(--accent);
+    selection-color: #F3EEFB;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-bright);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.badge-glow {
+  box-shadow: 0 0 12px var(--accent-tint);
+}
+
+.action-glow {
+  box-shadow: 0 0 16px var(--action-tint);
+}

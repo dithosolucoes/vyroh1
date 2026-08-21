@@ -1,0 +1,8 @@
+{
+  "name": "Vyroh — O Cofre Inteligente",
+  "description": "O agregador e cérebro central para profissionais solo. Guarde, organize, planeje com IA e monetize seus ativos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
