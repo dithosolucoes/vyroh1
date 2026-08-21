@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/src/lib/db";
 import { getSession, hashPassword, verifyPassword } from "@/src/lib/auth";
+import { checkRateLimit, getClientIp } from "@/src/lib/rateLimit";
 import { eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -14,6 +15,16 @@ export async function POST(req: NextRequest) {
     const { action, email, password, name, role, orgName } = body;
 
     if (action === "sign-in" || action === "login") {
+      // Marco 7 (Segurança): no máximo 5 tentativas de login por IP a cada 10 minutos
+      const ip = getClientIp(req);
+      const limit = checkRateLimit(`login:${ip}`, 5, 10 * 60 * 1000);
+      if (!limit.allowed) {
+        return NextResponse.json(
+          { error: `Muitas tentativas de login. Tente novamente em ${limit.retryAfterSeconds}s.` },
+          { status: 429 }
+        );
+      }
+
       const user = await db.query.users.findFirst({
         where: eq(schema.users.email, email),
       });
@@ -66,6 +77,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "sign-up" || action === "register") {
+      // Marco 7 (Segurança): no máximo 3 cadastros por IP a cada hora
+      const ip = getClientIp(req);
+      const limit = checkRateLimit(`register:${ip}`, 3, 60 * 60 * 1000);
+      if (!limit.allowed) {
+        return NextResponse.json(
+          { error: `Muitos cadastros a partir deste endereço. Tente novamente em ${Math.ceil(limit.retryAfterSeconds / 60)} min.` },
+          { status: 429 }
+        );
+      }
+
       const existing = await db.query.users.findFirst({
         where: eq(schema.users.email, email),
       });

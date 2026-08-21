@@ -60,21 +60,27 @@ export async function getSession(req?: Request | any): Promise<SessionResult> {
     }
 
     if (!token) {
-      // Default dev fallback if no token
-      return {
-        user: {
-          id: "usr_default",
-          name: "Gabriel (Admin)",
-          email: "tgabrieltgabriel324@gmail.com",
-          role: "admin",
-          orgId: "org_default",
-          aiProviderPref: "gemini",
-        },
-        session: {
-          id: "sess_default",
-          expiresAt: new Date(Date.now() + 86400000 * 30),
-        },
-      };
+      // Marco 7 (Segurança): a sessão de demonstração só existe em desenvolvimento,
+      // e só quando o próprio desenvolvedor liga explicitamente a flag abaixo.
+      // Nunca deve existir um "usuário fantasma admin" em produção — falha aberta é
+      // exatamente o tipo de bug que vira brecha de segurança séria.
+      if (process.env.NODE_ENV !== "production" && process.env.ALLOW_DEV_SESSION_FALLBACK === "true") {
+        return {
+          user: {
+            id: "usr_default",
+            name: "Usuário de Desenvolvimento",
+            email: "dev@localhost",
+            role: "owner",
+            orgId: "org_default",
+            aiProviderPref: "gemini",
+          },
+          session: {
+            id: "sess_default",
+            expiresAt: new Date(Date.now() + 86400000 * 30),
+          },
+        };
+      }
+      return { user: null, session: null };
     }
 
     const sessionRecord = await db.query.sessions.findFirst({
@@ -107,20 +113,10 @@ export async function getSession(req?: Request | any): Promise<SessionResult> {
       },
     };
   } catch (error) {
-    console.warn("[Auth] Fallback session due to DB connection:", error);
-    return {
-      user: {
-        id: "usr_default",
-        name: "Gabriel (Admin)",
-        email: "tgabrieltgabriel324@gmail.com",
-        role: "admin",
-        orgId: "org_default",
-        aiProviderPref: "gemini",
-      },
-      session: {
-        id: "sess_default",
-        expiresAt: new Date(Date.now() + 86400000),
-      },
-    };
+    // Marco 7 (Segurança): falha de conexão com o banco NUNCA pode virar acesso de admin —
+    // isso seria "falha aberta" (fail-open), o oposto do que autenticação deve fazer.
+    // Uma instabilidade de rede não pode virar uma brecha de segurança.
+    console.error("[Auth] Falha ao verificar sessão (fail-closed, acesso negado):", error);
+    return { user: null, session: null };
   }
 }
