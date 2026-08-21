@@ -981,6 +981,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBoilerplates((prev) =>
       prev.map((bp) => (bp.id === id ? { ...bp, ...data, updatedAt: new Date().toISOString() } : bp))
     );
+    apiFetch(`/api/boilerplates/${id}`, { method: 'PUT', body: JSON.stringify(data) }).catch(() => {});
     showToast('Boilerplate atualizado.');
   };
 
@@ -1095,11 +1096,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       url: data.url || 'https://',
     };
     setSubscriptions((prev) => [newSub, ...prev]);
+
+    apiFetch('/api/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify(newSub),
+    }).catch(() => {});
+
     showToast('Assinatura SaaS registrada no cofre.');
   };
 
   const deleteSubscription = async (id: string) => {
     setSubscriptions((prev) => prev.filter((s) => s.id !== id));
+    apiFetch(`/api/subscriptions/${id}`, { method: 'DELETE' }).catch(() => {});
     showToast('Assinatura removida do inventário.');
   };
 
@@ -1131,6 +1139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateProposalStatus = async (id: string, status: Proposal['status']) => {
     setProposals((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+    apiFetch('/api/proposals', { method: 'PUT', body: JSON.stringify({ id, status }) }).catch(() => {});
     showToast(`Status da proposta alterado para: ${status.toUpperCase()}`);
   };
 
@@ -1149,13 +1158,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
     };
     setMCPs((prev) => [newMcp, ...prev]);
+
+    apiFetch('/api/mcps', {
+      method: 'POST',
+      body: JSON.stringify(newMcp),
+    }).catch(() => {});
+
     showToast('Servidor MCP registrado!');
   };
 
   const toggleMCPStatus = async (id: string) => {
+    let nextStatus: 'connected' | 'offline' = 'connected';
     setMCPs((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: m.status === 'connected' ? 'offline' : 'connected' } : m))
+      prev.map((m) => {
+        if (m.id !== id) return m;
+        nextStatus = m.status === 'connected' ? 'offline' : 'connected';
+        return { ...m, status: nextStatus };
+      })
     );
+    apiFetch('/api/mcps', { method: 'PUT', body: JSON.stringify({ id, status: nextStatus }) }).catch(() => {});
   };
 
   // Cérebro AI Roadmap
@@ -1436,6 +1457,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       likes: 0,
       createdAt: new Date().toISOString(),
     };
+
+    apiFetch(`/api/community/topics/${topicId}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }).catch(() => {});
 
     setCommunityTopics((prev) =>
       prev.map((t) =>

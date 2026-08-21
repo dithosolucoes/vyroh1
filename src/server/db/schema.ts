@@ -172,6 +172,45 @@ export const sops = pgTable("sops", {
 });
 
 // ==========================================
+// 5b. MCPs, Skills & Stack de Assinaturas (Tier 2 - Section 5)
+// ==========================================
+export const mcps = pgTable("mcps", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  orgId: varchar("org_id", { length: 64 }).notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  endpoint: text("endpoint").notNull(),
+  description: text("description"),
+  transport: varchar("transport", { length: 50 }).default("sse"),
+  toolsCount: integer("tools_count").default(0),
+  status: varchar("status", { length: 50 }).default("connected"), // connected | offline
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const subscriptions = pgTable("subscriptions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  orgId: varchar("org_id", { length: 64 }).notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  serviceName: varchar("service_name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 50 }).default("infra"),
+  costMonthlyCents: bigint("cost_monthly_cents", { mode: "number" }).default(0),
+  currency: varchar("currency", { length: 10 }).default("BRL"),
+  renewalDate: varchar("renewal_date", { length: 20 }),
+  paymentMethod: varchar("payment_method", { length: 100 }),
+  roiRating: varchar("roi_rating", { length: 50 }).default("bom"),
+  status: varchar("status", { length: 50 }).default("active"),
+  url: text("url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const roadmapRuns = pgTable("roadmap_runs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  orgId: varchar("org_id", { length: 64 }).notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  goalDescription: text("goal_description").notNull(),
+  generatedPlan: jsonb("generated_plan").notNull(),
+  status: varchar("status", { length: 50 }).default("draft"), // draft | in_progress | executed
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+// ==========================================
 // 6. Propostas Comerciais & Escrow (Section 13)
 // ==========================================
 export const proposals = pgTable("proposals", {
@@ -229,6 +268,29 @@ export const orders = pgTable("orders", {
   status: varchar("status", { length: 50 }).default("pago"), // pendente | pago | reembolsado
   stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
   stripeTransferId: varchar("stripe_transfer_id", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const creatorSubscriptions = pgTable("creator_subscriptions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  listingId: varchar("listing_id", { length: 64 }).notNull().references(() => listings.id),
+  subscriberOrgId: varchar("subscriber_org_id", { length: 64 }).notNull().references(() => organizations.id),
+  amountMonthlyCents: bigint("amount_monthly_cents", { mode: "number" }).notNull(),
+  status: varchar("status", { length: 50 }).default("active"), // active | cancelled
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const sellerAccounts = pgTable("seller_accounts", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  orgId: varchar("org_id", { length: 64 }).notNull().references(() => organizations.id, { onDelete: "cascade" }).unique(),
+  stripeConnectAccountId: varchar("stripe_connect_account_id", { length: 255 }),
+  kycStatus: varchar("kyc_status", { length: 50 }).default("pending"), // pending | verified | required
+  totalEarningsCents: bigint("total_earnings_cents", { mode: "number" }).default(0),
+  pendingBalanceCents: bigint("pending_balance_cents", { mode: "number" }).default(0),
+  availableBalanceCents: bigint("available_balance_cents", { mode: "number" }).default(0),
+  payouts: jsonb("payouts").default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 

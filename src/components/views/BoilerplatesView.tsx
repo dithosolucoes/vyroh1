@@ -15,11 +15,13 @@ import {
   FolderKanban,
   Trash2,
 } from 'lucide-react';
+import { LinkPreviewPanel } from '../common/LinkPreviewPanel';
 
 export const BoilerplatesView: React.FC = () => {
   const { boilerplates, openModal, deleteBoilerplate, showToast } = useApp();
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const filtered = boilerplates.filter(
     (b) =>
@@ -97,15 +99,13 @@ export const BoilerplatesView: React.FC = () => {
                   </p>
                 </div>
 
-                <a
-                  href={b.repoUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-[#121014] text-[var(--text-muted)] hover:text-white border border-[var(--border)]"
-                  title="Abrir no GitHub"
+                <button
+                  onClick={() => setPreviewUrl(b.repoUrl)}
+                  className="p-1.5 rounded-lg bg-[#121014] text-[var(--text-muted)] hover:text-white border border-[var(--border)] cursor-pointer"
+                  title="Ver preview sem sair do Vyroh"
                 >
                   <Github className="w-4 h-4" />
-                </a>
+                </button>
               </div>
 
               {/* Stack Tags */}
@@ -157,6 +157,8 @@ export const BoilerplatesView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {previewUrl && <LinkPreviewPanel url={previewUrl} onClose={() => setPreviewUrl(null)} />}
     </div>
   );
 };
