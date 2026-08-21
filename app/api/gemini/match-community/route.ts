@@ -34,15 +34,29 @@ Retorne APENAS um JSON válido, sem markdown, no formato:
 
     const selectedProvider = (provider || user?.aiProviderPref || "gemini") as AiProvider;
 
-    const result = await generateAiCompletion({
-      prompt: promptText,
-      systemInstruction: "Responda apenas com JSON válido, técnico e objetivo.",
-      provider: selectedProvider,
-      model,
-    });
+    try {
+      const result = await generateAiCompletion({
+        prompt: promptText,
+        systemInstruction: "Responda apenas com JSON válido, técnico e objetivo.",
+        provider: selectedProvider,
+        model,
+      });
 
-    const aiAnalysis = extractJson(result.text);
-    return NextResponse.json({ success: true, aiAnalysis });
+      const aiAnalysis = extractJson(result.text);
+      return NextResponse.json({ success: true, aiAnalysis });
+    } catch (aiError: any) {
+      // Modo híbrido: sem chave de IA configurada, o tópico ainda é publicado
+      // normalmente — só o auto-match fica marcado como simulado.
+      return NextResponse.json({
+        success: true,
+        simulated: true,
+        aiAnalysis: {
+          summaryAnswer: `[Simulação — nenhuma chave de IA configurada] Configure GEMINI_API_KEY, ANTHROPIC_API_KEY ou OPENAI_API_KEY para o Vyroh analisar "${questionTitle}" de verdade e sugerir ativos do cofre e especialistas.`,
+          recommendedAssets: [],
+          recommendedExperts: [],
+        },
+      });
+    }
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Falha na análise de IA" }, { status: 500 });
   }

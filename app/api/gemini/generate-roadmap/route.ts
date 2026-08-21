@@ -59,16 +59,46 @@ Retorne APENAS um JSON válido, sem markdown, sem texto fora do JSON, no seguint
 
     const selectedProvider = (provider || user?.aiProviderPref || "gemini") as AiProvider;
 
-    const result = await generateAiCompletion({
-      prompt: promptText,
-      systemInstruction:
-        "Você é um arquiteto sênior e estrategista de produtos do Vyroh. Seja pragmático, objetivo, técnico e focado em alto ROI e reaproveitamento de código e processos. Responda apenas com JSON válido.",
-      provider: selectedProvider,
-      model,
-    });
+    try {
+      const result = await generateAiCompletion({
+        prompt: promptText,
+        systemInstruction:
+          "Você é um arquiteto sênior e estrategista de produtos do Vyroh. Seja pragmático, objetivo, técnico e focado em alto ROI e reaproveitamento de código e processos. Responda apenas com JSON válido.",
+        provider: selectedProvider,
+        model,
+      });
 
-    const roadmap = extractJson(result.text);
-    return NextResponse.json({ success: true, roadmap });
+      const roadmap = extractJson(result.text);
+      return NextResponse.json({ success: true, roadmap });
+    } catch (aiError: any) {
+      // Modo híbrido: sem chave de IA configurada, devolve um roadmap de exemplo
+      // estruturado do mesmo jeito que o real, deixando claro que é simulação.
+      return NextResponse.json({
+        success: true,
+        simulated: true,
+        roadmap: {
+          title: `[Simulação] Roadmap para: ${goalDescription.slice(0, 60)}`,
+          complexity: "Média",
+          targetWeeks: targetTimeline || "3-4 semanas",
+          summary: `Esta é uma resposta simulada porque nenhuma chave de IA está configurada para "${selectedProvider}". Configure GEMINI_API_KEY, ANTHROPIC_API_KEY ou OPENAI_API_KEY (ou um Ollama local) para receber um roadmap real, gerado a partir do seu objetivo e do conteúdo do seu cofre.`,
+          matchedAssets: [
+            { type: "boilerplate", name: "(exemplo) Boilerplate mais recente do seu cofre", reason: "Ilustra como a IA cruzaria seu objetivo com o que você já tem guardado" },
+          ],
+          steps: [
+            {
+              stepNumber: 1,
+              title: "Estruturação da fundação",
+              duration: "3-4 dias",
+              deliverables: ["Schema de banco", "Autenticação", "Configuração de ambiente"],
+              toolsNeeded: ["PostgreSQL", "Next.js"],
+              vaultAssetMatched: null,
+            },
+          ],
+          gaps: ["Esta lista de lacunas é ilustrativa — conecte uma chave de IA para uma análise real do seu cofre."],
+          professionalNeeded: { needed: false, role: "", skills: [], estimatedHours: "", reason: "" },
+        },
+      });
+    }
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Falha ao gerar roadmap com IA" }, { status: 500 });
   }

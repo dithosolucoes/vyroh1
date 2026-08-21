@@ -4,6 +4,15 @@ import { eq } from "drizzle-orm";
 
 let stripeClient: Stripe | null = null;
 
+/**
+ * Modo híbrido (Marco 4/7): sem STRIPE_SECRET_KEY real configurada, o Vyroh não
+ * tenta chamar a API do Stripe (que falharia com erro de autenticação) — as
+ * funções abaixo caem num fluxo simulado em vez de derrubar a tela do usuário.
+ */
+export function isStripeConfigured(): boolean {
+  return Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith("sk_"));
+}
+
 export function getStripeClient(): Stripe {
   if (!stripeClient) {
     const key = process.env.STRIPE_SECRET_KEY || "sk_test_placeholder_key_vyroh";
@@ -66,6 +75,14 @@ export async function calculatePlatformSplit(amountCents: number, flowType: Comm
  * Creates a Stripe Connect Express onboarding account link for creators
  */
 export async function createStripeConnectAccountLink(userId: string, returnUrl: string) {
+  if (!isStripeConfigured()) {
+    return {
+      accountId: `acct_simulado_${userId}`,
+      url: `${returnUrl}?stripe_connect=simulado`,
+      simulated: true,
+    };
+  }
+
   const stripe = getStripeClient();
 
   const account = await stripe.accounts.create({
@@ -104,8 +121,18 @@ export async function createStripeCheckoutSession(params: {
   cancelUrl: string;
   customerEmail?: string;
 }) {
-  const stripe = getStripeClient();
   const split = await calculatePlatformSplit(params.amountCents, params.flowType);
+
+  if (!isStripeConfigured()) {
+    return {
+      sessionId: `sess_simulado_${Date.now()}`,
+      url: undefined,
+      split,
+      simulated: true,
+    };
+  }
+
+  const stripe = getStripeClient();
 
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     payment_method_types: ["card", "boleto"] as any,

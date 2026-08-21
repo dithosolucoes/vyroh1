@@ -22,22 +22,33 @@ export async function POST(req: NextRequest) {
     const selectedProvider = (provider || user?.aiProviderPref || "gemini") as AiProvider;
     const startTime = Date.now();
 
-    const result = await generateAiCompletion({
-      prompt: finalPrompt,
-      systemInstruction,
-      provider: selectedProvider,
-      model,
-    });
+    try {
+      const result = await generateAiCompletion({
+        prompt: finalPrompt,
+        systemInstruction,
+        provider: selectedProvider,
+        model,
+      });
 
-    const latencyMs = Date.now() - startTime;
-
-    return NextResponse.json({
-      success: true,
-      output: result.text,
-      latencyMs,
-      model: result.modelUsed,
-      provider: result.providerUsed,
-    });
+      return NextResponse.json({
+        success: true,
+        output: result.text,
+        latencyMs: Date.now() - startTime,
+        model: result.modelUsed,
+        provider: result.providerUsed,
+      });
+    } catch (aiError: any) {
+      // Modo híbrido: sem chave de IA configurada (ou provedor indisponível), o Vyroh
+      // não quebra a tela — devolve uma simulação, deixando claro que é simulação.
+      return NextResponse.json({
+        success: true,
+        simulated: true,
+        output: `[SIMULAÇÃO VYROH — nenhuma chave de IA configurada para "${selectedProvider}"]\n\nEntrada recebida: "${finalPrompt.slice(0, 160)}${finalPrompt.length > 160 ? "..." : ""}"\n\nConfigure GEMINI_API_KEY, ANTHROPIC_API_KEY ou OPENAI_API_KEY (ou um Ollama local) nas variáveis de ambiente para receber a resposta real do modelo.`,
+        latencyMs: Date.now() - startTime,
+        model: "simulado",
+        provider: selectedProvider,
+      });
+    }
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Erro na execução do prompt" }, { status: 500 });
   }
