@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   User,
   UserRole,
@@ -325,6 +326,9 @@ function formatViewToPath(view: ActiveView, entityId?: string | null): string {
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Real Next.js router — navegação de verdade (troca a página renderizada), não só a URL na barra
+  const router = useRouter();
+
   // Theme state
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (loadStorage('vyroh-theme', 'dark') as 'dark' | 'light');
@@ -437,17 +441,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPortalDomainState(getDomainForView(activeView));
   }, [activeView]);
 
-  // Synchronize browser history and real URL changes (Section 14)
+  // Real navigation (Section 14): usa o router do Next.js, não só reescreve a URL.
+  // Isso é o que faz o conteúdo da tela realmente trocar quando o usuário clica no menu.
   const navigate = useCallback((path: string) => {
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', path);
-      const parsed = parsePathToView(path);
-      setActiveViewState(parsed.view);
-      if (parsed.view === 'projeto_detalhe' && parsed.entityId) setSelectedProjectId(parsed.entityId);
-      if (parsed.view === 'loja_vendedor' && parsed.entityId) setSelectedSellerId(parsed.entityId);
-      if (parsed.view === 'prompts' && parsed.entityId) setSelectedPromptId(parsed.entityId);
-    }
-  }, []);
+    router.push(path);
+    const parsed = parsePathToView(path);
+    setActiveViewState(parsed.view);
+    if (parsed.view === 'projeto_detalhe' && parsed.entityId) setSelectedProjectId(parsed.entityId);
+    if (parsed.view === 'loja_vendedor' && parsed.entityId) setSelectedSellerId(parsed.entityId);
+    if (parsed.view === 'prompts' && parsed.entityId) setSelectedPromptId(parsed.entityId);
+  }, [router]);
 
   const setActiveView = useCallback((view: ActiveView, customId?: string | null) => {
     setActiveViewState(view);
@@ -457,9 +460,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const canonicalPath = formatViewToPath(view, customId || (view === 'projeto_detalhe' ? selectedProjectId : view === 'loja_vendedor' ? selectedSellerId : undefined));
     if (typeof window !== 'undefined' && window.location.pathname !== canonicalPath) {
-      window.history.pushState(null, '', canonicalPath);
+      router.push(canonicalPath);
     }
-  }, [selectedProjectId, selectedSellerId]);
+  }, [selectedProjectId, selectedSellerId, router]);
 
   const setPortalDomain = useCallback((portal: PortalDomain) => {
     setPortalDomainState(portal);
